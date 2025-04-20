@@ -105,46 +105,55 @@ if user_input:
 
             # --------- Bar Plot ---------
             st.subheader("📊 Alt Text Distribution")
-            fig, ax = plt.subplots(figsize=(4, 3))  # Smaller figure for compact look
 
-            bars = ax.bar(["With Alt", "Missing Alt"], [with_alt, missing_alt], width=0.3, color=["green", "red"])
+            # Smaller figure for a compact display
+            fig, ax = plt.subplots(figsize=(3, 2.2))  # Width x Height in inches
 
-            # Optional: Add text labels above the bars
+            # Draw thinner bars
+            bars = ax.bar(["With Alt", "Missing Alt"], [with_alt, missing_alt], width=0.25, color=["green", "red"])
+
+            # Add text labels above bars
             for bar in bars:
                 height = bar.get_height()
-                ax.text(bar.get_x() + bar.get_width()/2.0, height + 0.5, f'{int(height)}', ha='center', va='bottom', fontsize=10)
+                ax.text(bar.get_x() + bar.get_width() / 2.0, height + 0.3, f'{int(height)}',
+                        ha='center', va='bottom', fontsize=8)
 
-            ax.set_ylabel("Count", fontsize=10)
-            ax.set_ylim(0, max(with_alt, missing_alt) + 5)  # Adjust y-limit for space
-            ax.tick_params(axis='x', labelsize=10)
-            ax.tick_params(axis='y', labelsize=9)
+            # Axis settings
+            ax.set_ylabel("Count", fontsize=8)
+            ax.set_ylim(0, max(with_alt, missing_alt) + 3)
+            ax.tick_params(axis='x', labelsize=8)
+            ax.tick_params(axis='y', labelsize=7)
+
+            # Remove top and right spines
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
 
+            # Display in Streamlit
             st.pyplot(fig)
 
 
+
             # --------- Detailed Table ---------
-            st.subheader("📋 Image Table")
-            # Function to generate HTML <img> tag for previews
-            def generate_img_tag(src):
+            st.subheader("📋 Image Details")
+
+            # Loop through each row and display the details
+            for idx, row in df.iterrows():
+                st.markdown(f"### 🆔 Index: {row['index']}")
+
+                # Try to display the image
                 try:
-                    return f"<img src='{src}' width='100' height='100'>"
+                    response = requests.get(row['src'], timeout=5)
+                    img = Image.open(BytesIO(response.content))
+                    st.image(img.resize((200, 200)), caption="Image Preview", use_column_width=False)
                 except:
-                    return "❌"
+                    st.markdown("❌ **Image could not be loaded**")
 
-            # Copy and transform dataframe
-            df_display = df.copy()
-            df_display["Preview"] = df_display["src"].apply(generate_img_tag)
-            df_display["Has Alt"] = df_display["has_alt"].apply(lambda x: "✅" if x else "❌")
-            df_display["Alt Text"] = df_display["alt_text"].fillna("None")
-
-            # Only display selected columns
-            df_display = df_display[["index", "Preview", "Has Alt", "Alt Text"]]
-
-            # Convert to HTML table
-            table_html = df_display.to_html(escape=False, index=False)
-            st.markdown(table_html, unsafe_allow_html=True)
+                # Show alt information
+                st.write(f"**Has Alt:** {'✅ Yes' if row['has_alt'] else '❌ No'}")
+                st.write(f"**Alt Text:** {row['alt_text'] or 'N/A'}")
+                
+                # Divider line between entries
+                st.markdown("---")
 
     else:
         st.warning("❌ Invalid input. Please use full URL.")
