@@ -14,16 +14,13 @@ st.set_page_config(layout="wide", page_title="Website Image Report", page_icon="
 # -------------------------------
 with st.sidebar:
     st.header("🔍 Website Input")
-    user_input = st.text_input("Enter a URL or reportanalysis@domain", "")
+    user_input = st.text_input("Enter a URL: ", "")
 
 # -------------------------------
 # Convert input to valid URL
 # -------------------------------
 def get_valid_url(inp):
-    if inp.startswith("reportanalysis@"):
-        domain = inp.split("@")[1]
-        return "https://" + domain
-    elif inp.startswith("http"):
+    if inp.startswith("http"):
         return inp
     return None
 
@@ -32,7 +29,7 @@ def get_valid_url(inp):
 # -------------------------------
 def analyze_images(url):
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=30)
         soup = BeautifulSoup(response.text, "html.parser")
 
         images = soup.find_all("img")
@@ -40,7 +37,9 @@ def analyze_images(url):
 
         for i, img in enumerate(images):
             src = img.get("src")
-            alt = img.get("alt", "")
+            alt = img.get("alt", "")  # First, try to get the alt text, default to empty string if not found.
+            if alt == "" or alt == "..." or alt is None:
+                alt = "No Alt Text"  # You can set this to whatever makes sense for your app.
             full_src = urljoin(url, src)
             data.append({
                 "index": i + 1,
@@ -51,9 +50,13 @@ def analyze_images(url):
 
         df = pd.DataFrame(data)
         return df, response.status_code
+    
+    except requests.exceptions.ConnectTimeout:
+        return None, "Connection timed out – the website may be slow or unresponsive."
 
     except Exception as e:
         return None, str(e)
+    
 
 # -------------------------------
 # Main Display
@@ -118,4 +121,4 @@ if user_input:
             st.dataframe(df_display, use_container_width=True)
 
     else:
-        st.warning("❌ Invalid input. Please use `reportanalysis@domain` or full URL.")
+        st.warning("❌ Invalid input. Please use Full URL.")
