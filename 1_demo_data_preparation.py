@@ -74,21 +74,6 @@ if user_input:
         if df is None:
             st.error(f"❌ Error: {status}")
         else:
-            total = len(df)
-            with_alt = df['has_alt'].sum()  # Calculate the number of images with alt text
-            missing_alt = total - with_alt
-
-            # --------- Top Metrics ---------
-            col1, col2, col3 = st.columns(3)
-            col1.metric("🖼️ Total Images", total)
-            col2.metric("✅ With Alt Text", with_alt)
-            col3.metric("⚠️ Missing Alt", missing_alt)
-
-            # --------- Bar Plot ---------
-            st.subheader("📊 Alt Text Distribution")
-            fig, ax = plt.subplots()
-            ax.bar(["With Alt", "Missing Alt"], [with_alt, missing_alt], color=["green", "red"])
-            st.pyplot(fig)
 
             # --------- Status Code ---------
             st.subheader("✅ Status Code Summary")
@@ -109,18 +94,43 @@ if user_input:
             desc = status_descriptions.get(status, "Unknown or uncommon status code.")
             st.info(f"Website responded with **HTTP `{status}`** – {desc}")
 
+            total = len(df)
+            with_alt = df['has_alt'].sum()  # Calculate the number of images with alt text
+            missing_alt = total - with_alt
+
+            # --------- Top Metrics ---------
+            col1, col2, col3 = st.columns(3)
+            col1.metric("🖼️ Total Images", total)
+            col2.metric("✅ With Alt Text", with_alt)
+            col3.metric("⚠️ Missing Alt", missing_alt)
+
+            # --------- Bar Plot ---------
+            st.subheader("📊 Alt Text Distribution")
+            fig, ax = plt.subplots(figsize=(6, 6))  # Adjust size for a circular chart
+
+            # Data for Pie chart
+            labels = ["With Alt", "Missing Alt"]
+            sizes = [with_alt, missing_alt]
+            colors = ["green", "red"]
+            explode = (0.1, 0)  # 'explode' to highlight the 'With Alt' section
+
+            ax.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140, wedgeprops={'edgecolor': 'black', 'linewidth': 1.5})
+            ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+            st.pyplot(fig)
+
             # --------- Detailed Table ---------
             st.subheader("📋 Image Table")
             def show_image(src):
                 try:
                     response = requests.get(src, timeout=5)
                     img = Image.open(BytesIO(response.content))
-                    return img
+                    return img.resize((200 , 200))
                 except:
                     return "❌"
 
             df_display = df.copy()
-            df_display["Preview"] = df_display["src"].apply(lambda x: show_image(x))
+            df_display["Preview"] = df_display["src"].apply(lambda x: st.image(x, width=200))
             df_display = df_display[["index", "Preview", "has_alt", "alt_text"]]
 
             st.dataframe(df_display, use_container_width=True)
