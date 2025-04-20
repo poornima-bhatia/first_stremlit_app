@@ -100,7 +100,7 @@ if user_input:
             with_alt = df[df['has_alt'] & (~df['alt_text'].isin(["", "...", None]))].shape[0]
 
             # Count of missing/invalid alt texts
-            missing_alt = total - with_alt
+            missing_alt = df[~df['has_alt'] | df['alt_text'].isin(["", "...", None])].shape[0]
 
             # --------- Top Metrics ---------
             col1, col2, col3 = st.columns(3)
@@ -149,7 +149,7 @@ if user_input:
                 try:
                     response = requests.get(row['src'], timeout=30)
                     img = Image.open(BytesIO(response.content))
-                    st.image(img.resize((200, 200)), caption="Image Preview", use_column_width=False)
+                    st.image(img.resize((200, 200)), caption="Image Preview", use_column_width=True)
                 except:
                     st.markdown("❌ **Image could not be loaded**")
 
