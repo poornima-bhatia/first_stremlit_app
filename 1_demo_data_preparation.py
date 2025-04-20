@@ -29,7 +29,7 @@ def get_valid_url(inp):
 # -------------------------------
 def analyze_images(url):
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=30)
         soup = BeautifulSoup(response.text, "html.parser")
 
         images = soup.find_all("img")
@@ -93,8 +93,13 @@ if user_input:
             desc = status_descriptions.get(status, "Unknown or uncommon status code.")
             st.info(f"Website responded with **HTTP `{status}`** – {desc}")
 
+            # Total number of images
             total = len(df)
-            with_alt = df['has_alt'].sum()  # Calculate the number of images with alt text
+
+            # Count of valid alt texts (not empty, not None, not "...")
+            with_alt = df[df['has_alt'] & (~df['alt_text'].isin(["", "...", None]))].shape[0]
+
+            # Count of missing/invalid alt texts
             missing_alt = total - with_alt
 
             # --------- Top Metrics ---------
