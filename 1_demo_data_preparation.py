@@ -142,7 +142,7 @@ if user_input:
 
                 # Try to display the image
                 try:
-                    response = requests.get(row['src'], timeout=5)
+                    response = requests.get(row['src'], timeout=30)
                     img = Image.open(BytesIO(response.content))
                     st.image(img.resize((200, 200)), caption="Image Preview", use_column_width=False)
                 except:
