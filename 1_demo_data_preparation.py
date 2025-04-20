@@ -74,7 +74,6 @@ if user_input:
         if df is None:
             st.error(f"❌ Error: {status}")
         else:
-
             # --------- Status Code ---------
             st.subheader("✅ Status Code Summary")
 
@@ -106,34 +105,54 @@ if user_input:
 
             # --------- Bar Plot ---------
             st.subheader("📊 Alt Text Distribution")
-            fig, ax = plt.subplots(figsize=(6, 6))  # Adjust size for a circular chart
+            fig, ax = plt.subplots(figsize=(4, 3))  # Smaller figure for compact look
 
-            # Data for Pie chart
-            labels = ["With Alt", "Missing Alt"]
-            sizes = [with_alt, missing_alt]
-            colors = ["green", "red"]
-            explode = (0.1, 0)  # 'explode' to highlight the 'With Alt' section
+            bars = ax.bar(["With Alt", "Missing Alt"], [with_alt, missing_alt], width=0.3, color=["green", "red"])
 
-            ax.pie(sizes, explode=explode, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140, wedgeprops={'edgecolor': 'black', 'linewidth': 1.5})
-            ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+            # Optional: Add text labels above the bars
+            for bar in bars:
+                height = bar.get_height()
+                ax.text(bar.get_x() + bar.get_width()/2.0, height + 0.5, f'{int(height)}', ha='center', va='bottom', fontsize=10)
+
+            ax.set_ylabel("Count", fontsize=10)
+            ax.set_ylim(0, max(with_alt, missing_alt) + 5)  # Adjust y-limit for space
+            ax.tick_params(axis='x', labelsize=10)
+            ax.tick_params(axis='y', labelsize=9)
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
 
             st.pyplot(fig)
 
+
             # --------- Detailed Table ---------
-            st.subheader("📋 Image Table")
-            def show_image(src):
-                try:
-                    response = requests.get(src, timeout=5)
-                    img = Image.open(BytesIO(response.content))
-                    return img.resize((200 , 200))
-                except:
-                    return "❌"
+            st.subheader("📋 Image Table with Previews")
 
-            df_display = df.copy()
-            df_display["Preview"] = df_display["src"].apply(lambda x: st.image(x, width=200))
-            df_display = df_display[["index", "Preview", "has_alt", "alt_text"]]
+            table_html = """
+            <table style='width:100%; border-collapse: collapse;' border='1'>
+            <tr>
+                <th>Index</th>
+                <th>Preview</th>
+                <th>Has Alt</th>
+                <th>Alt Text</th>
+            </tr>
+            """
 
-            st.dataframe(df_display, use_container_width=True)
+            for _, row in df.iterrows():
+                img_tag = f"<img src='{row['src']}' width='100' height='100'>" if row['src'] else "❌"
+                has_alt = "✅" if row["has_alt"] else "❌"
+                alt_text = row["alt_text"] if row["alt_text"] else "N/A"
 
+                table_html += f"""
+                <tr>
+                    <td>{row['index']}</td>
+                    <td>{img_tag}</td>
+                    <td>{has_alt}</td>
+                    <td>{alt_text}</td>
+                </tr>
+                """
+
+            table_html += "</table>"
+            st.markdown(table_html, unsafe_allow_html=True)
+            
     else:
         st.warning("❌ Invalid input. Please use full URL.")
