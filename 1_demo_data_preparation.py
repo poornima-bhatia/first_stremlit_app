@@ -14,7 +14,7 @@ st.set_page_config(layout="wide", page_title="Website Image Report", page_icon="
 # -------------------------------
 with st.sidebar:
     st.header("🔍 Website Input")
-    user_input = st.text_input("Enter a URL or reportanalysis@domain", "")
+    user_input = st.text_input("Enter a URL", "")
 
 # -------------------------------
 # Convert input to valid URL
@@ -125,34 +125,26 @@ if user_input:
 
 
             # --------- Detailed Table ---------
-            st.subheader("📋 Image Table with Previews")
+            st.subheader("📋 Image Table")
+            # Function to generate HTML <img> tag for previews
+            def generate_img_tag(src):
+                try:
+                    return f"<img src='{src}' width='100' height='100'>"
+                except:
+                    return "❌"
 
-            table_html = """
-            <table style='width:100%; border-collapse: collapse;' border='1'>
-            <tr>
-                <th>Index</th>
-                <th>Preview</th>
-                <th>Has Alt</th>
-                <th>Alt Text</th>
-            </tr>
-            """
+            # Copy and transform dataframe
+            df_display = df.copy()
+            df_display["Preview"] = df_display["src"].apply(generate_img_tag)
+            df_display["Has Alt"] = df_display["has_alt"].apply(lambda x: "✅" if x else "❌")
+            df_display["Alt Text"] = df_display["alt_text"].fillna("None")
 
-            for _, row in df.iterrows():
-                img_tag = f"<img src='{row['src']}' width='100' height='100'>" if row['src'] else "❌"
-                has_alt = "✅" if row["has_alt"] else "❌"
-                alt_text = row["alt_text"] if row["alt_text"] else "N/A"
+            # Only display selected columns
+            df_display = df_display[["index", "Preview", "Has Alt", "Alt Text"]]
 
-                table_html += f"""
-                <tr>
-                    <td>{row['index']}</td>
-                    <td>{img_tag}</td>
-                    <td>{has_alt}</td>
-                    <td>{alt_text}</td>
-                </tr>
-                """
-
-            table_html += "</table>"
+            # Convert to HTML table
+            table_html = df_display.to_html(escape=False, index=False)
             st.markdown(table_html, unsafe_allow_html=True)
-            
+
     else:
         st.warning("❌ Invalid input. Please use full URL.")
