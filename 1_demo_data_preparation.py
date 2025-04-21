@@ -149,7 +149,7 @@ if user_input:
                 try:
                     response = requests.get(row['src'], timeout=30)
                     img = Image.open(BytesIO(response.content))
-                    st.image(img.resize((200, 200)), caption="Image Preview")
+                    st.image(img.resize((200, 200)), caption="Image Preview" , use_container_width=True)
                 except:
                     st.write(row['src'])
                     st.markdown("❌ **Image could not be loaded**")
